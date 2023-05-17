@@ -34,7 +34,25 @@ router.post("/new", async (req, res, next) => {
     wl: 0.0,
   });
 
-  res.status(200).send(newPlayer, newStats);
+  res.status(200).send({ newPlayer, newStats });
+});
+
+router.put("/:id/update", async (req, res, next) => {
+  let id = req.params.id;
+  let updatedPlayer = await playerModel.update(req.body, {
+    where: { id: id },
+    returning: true,
+  });
+
+  res.status(200).send(updatedPlayer);
+});
+
+router.delete("/:id", async (req, res, next) => {
+  let id = req.params.id;
+  let deletedPlayer = await playerModel.destroy({ where: { id: id } });
+  let deletedStats = await statsModel.destroy({ where: { id: id } });
+
+  res.status(200).send({ deletedPlayer, deletedStats });
 });
 
 module.exports = router;

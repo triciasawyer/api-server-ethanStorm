@@ -6,6 +6,7 @@ const cors = require("cors");
 
 // include routes
 const playerRoute = require("../routes/player");
+const statsRoute = require("../routes/stats");
 
 // include custom middleware
 const notFound = require("../src/error-handlers/404");
@@ -27,6 +28,7 @@ app.get("/test", (req, res) => {
 
 // use the custom routers
 app.use("/player", playerRoute);
+app.use("/stats", statsRoute);
 
 app.use("*", notFound);
 app.use(errorHandler);

@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
+const calculateStats = require("../src/lib/calculateStats");
+
 // include the required database models
 const { playerModel, statsModel } = require("../src/models");
 
@@ -14,7 +16,7 @@ router.get("/:id", async (req, res, next) => {
   const id = req.params.id;
   let stats = await statsModel.findAll({ where: { id: id } });
 
-  res.status(200).send(player);
+  res.status(200).send(stats);
 });
 
 router.get("/:id/with-player", async (req, res, next) => {
@@ -25,12 +27,33 @@ router.get("/:id/with-player", async (req, res, next) => {
   res.status(200).send({ stats, player });
 });
 
-router.put('/:id/update', (req, res, next) => {
-    const id = req.params.id;
+const updateStats = async (id, type) => {
+  // get old stats
+  const oldStats = await statsModel.findAll({ where: { id: id } });
+  // create new stats
+  const newStats = calculateStats(oldStats[0].dataValues, type);
+  // update with the database
+  const updatedStats = await statsModel.update(newStats, {
+    where: {
+      id: id,
+    },
+    returning: true,
+  });
 
+  return updatedStats;
+};
 
-    res.status.send(updatedStats)
-})
+router.put("/:id/update/wins", async (req, res, next) => {
+  const id = req.params.id;
+
+  res.status(202).send(await updateStats(id, "wins"));
+});
+
+router.put("/:id/update/losses", async (req, res, next) => {
+  const id = req.params.id;
+
+  res.status(200).send(await updateStats(id, "losses"));
+});
 
 router.post("/new", async (req, res, next) => {
   let newPlayer = await playerModel.create(req.body);
@@ -41,7 +64,15 @@ router.post("/new", async (req, res, next) => {
     wl: 0.0,
   });
 
-  res.status(200).send(newPlayer, newStats);
+  res.status(200).send({ newPlayer, newStats });
+});
+
+router.delete("/:id", async (req, res, next) => {
+  let id = req.params.id;
+  let deletedPlayer = await playerModel.destroy({ where: { id: id } });
+  let deletedStats = await statsModel.destroy({ where: { id: id } });
+
+  res.status(200).send({ deletedPlayer, deletedStats });
 });
 
 module.exports = router;
